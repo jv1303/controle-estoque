@@ -1,5 +1,7 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
 
 class DatabaseService {
   DatabaseService._();
@@ -12,13 +14,22 @@ class DatabaseService {
 
   Future<Database> get database async => _db ??= await _open();
 
+  /// no navegador o sqlite roda em wasm, nos outros casos usa o padrao
+  DatabaseFactory get _factory =>
+      kIsWeb ? databaseFactoryFfiWeb : databaseFactory;
+
   Future<Database> _open() async {
-    final folder = await getDatabasesPath();
-    return openDatabase(
-      p.join(folder, _fileName),
-      version: _schemaVersion,
-      onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
-      onCreate: _createSchema,
+    final path = kIsWeb
+        ? _fileName
+        : p.join(await _factory.getDatabasesPath(), _fileName);
+
+    return _factory.openDatabase(
+      path,
+      options: OpenDatabaseOptions(
+        version: _schemaVersion,
+        onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),
+        onCreate: _createSchema,
+      ),
     );
   }
 

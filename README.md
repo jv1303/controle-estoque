@@ -4,6 +4,9 @@ Projeto da disciplina de desenvolvimento mobile (DSM). É um app Android em Flut
 
 > Desenvolvido por **João Victor Serafim** (DSM, 5º semestre).
 
+**Testar online:** https://jv1303.github.io/controle-estoque/
+(na versão web os dados ficam guardados no próprio navegador)
+
 ## Telas
 
 | Tela | O que tem |
@@ -27,7 +30,7 @@ Na lista dá para somar ou tirar unidades com os botões **+** e **-**, tocar no
 
 ## Persistência
 
-Os dados ficam num banco **SQLite** local (`meu_estoque.db`), aberto pelo pacote `sqflite`. São duas tabelas com relação de um para muitos: um usuário tem vários produtos.
+Os dados ficam num banco **SQLite** local (`meu_estoque.db`), aberto pelo pacote `sqflite`. No navegador não existe arquivo de banco, então o `DatabaseService` troca a fábrica para a do `sqflite_common_ffi_web`, que roda o mesmo SQLite compilado em WebAssembly (arquivos `web/sqlite3.wasm` e `web/sqflite_sw.js`). São duas tabelas com relação de um para muitos: um usuário tem vários produtos.
 
 ```
 users (1) ──────< (N) products
@@ -74,7 +77,11 @@ As telas não escrevem SQL: elas chamam os services, e os services falam com o b
 
 ## Pacotes usados
 
-`sqflite`, `path`, `crypto`, `shared_preferences`, `intl` e `material_ui`. Nos testes também é usado o `sqflite_common_ffi`.
+`sqflite`, `sqflite_common_ffi_web`, `path`, `crypto`, `shared_preferences`, `intl` e `material_ui`. Nos testes também é usado o `sqflite_common_ffi`.
+
+## Publicação
+
+O arquivo `.github/workflows/deploy-web.yml` roda no GitHub Actions a cada push na `main`: instala o Flutter, roda os testes, gera a versão web e envia o resultado para o branch `gh-pages`, que é o que o GitHub Pages publica.
 
 ## Testes
 

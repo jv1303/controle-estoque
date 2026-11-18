@@ -27,6 +27,10 @@ class MeuEstoqueApp extends StatelessWidget {
           ? AppRoutes.home
           : AppRoutes.login,
       onGenerateRoute: AppRoutes.generate,
+      // sem isso o flutter empilha o login embaixo da home
+      onGenerateInitialRoutes: (name) => [
+        AppRoutes.generate(RouteSettings(name: name)),
+      ],
     );
   }
 }
