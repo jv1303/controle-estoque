@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi_web/sqflite_ffi_web.dart';
@@ -18,13 +18,16 @@ class DatabaseService {
   DatabaseFactory get _factory =>
       kIsWeb ? databaseFactoryFfiWeb : databaseFactory;
 
-  Future<Database> _open() async {
-    final path = kIsWeb
-        ? _fileName
-        : p.join(await _factory.getDatabasesPath(), _fileName);
+  /// no web o banco fica no armazenamento do navegador, entao basta o nome
+  Future<String> _location() async {
+    if (kIsWeb) return _fileName;
+    final folder = await _factory.getDatabasesPath();
+    return p.join(folder, _fileName);
+  }
 
+  Future<Database> _open() async {
     return _factory.openDatabase(
-      path,
+      await _location(),
       options: OpenDatabaseOptions(
         version: _schemaVersion,
         onConfigure: (db) => db.execute('PRAGMA foreign_keys = ON'),

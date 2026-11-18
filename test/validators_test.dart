@@ -7,7 +7,7 @@ void main() {
       expect(Validators.email(''), isNotNull);
     });
     test('sem dominio da erro', () {
-      expect(Validators.email('ana@'), 'E-mail inválido');
+      expect(Validators.email('ana@'), 'Digite um e-mail válido');
     });
     test('valido passa', () {
       expect(Validators.email('ana@gmail.com'), isNull);

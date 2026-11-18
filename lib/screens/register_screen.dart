@@ -14,7 +14,7 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _form = GlobalKey<FormState>();
   final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
@@ -30,12 +30,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   String? _validateConfirm(String? value) {
-    if (value != _passwordCtrl.text) return 'As senhas não conferem';
+    if (value != _passwordCtrl.text) {
+      return 'As duas senhas precisam ser iguais';
+    }
     return null;
   }
 
   Future<void> _createAccount() async {
-    if (_busy || !_formKey.currentState!.validate()) return;
+    if (_busy || !_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
       await AuthService.instance.register(
@@ -55,9 +57,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Criar conta')),
+      appBar: AppBar(title: const Text('Nova conta')),
       body: Form(
-        key: _formKey,
+        key: _form,
         child: ListView(
           padding: const EdgeInsets.all(24),
           children: [
@@ -65,11 +67,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: _nameCtrl,
               label: 'Nome completo',
               icon: Icons.person_outline,
-              validator: (v) => Validators.notEmpty(v, field: 'Nome'),
+              validator: (v) => Validators.notEmpty(v, field: 'O nome'),
             ),
             AppTextField(
               controller: _emailCtrl,
-              label: 'E-mail',
+              label: 'Seu e-mail',
               icon: Icons.alternate_email,
               keyboardType: TextInputType.emailAddress,
               validator: Validators.email,
@@ -80,14 +82,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
             PasswordField(
               controller: _confirmCtrl,
-              label: 'Confirmar senha',
+              label: 'Repita a senha',
               validator: _validateConfirm,
               onSubmitted: _createAccount,
             ),
             const SizedBox(height: 8),
             FilledButton(
               onPressed: _busy ? null : _createAccount,
-              child: const Text('Cadastrar'),
+              child: const Text('Criar minha conta'),
             ),
           ],
         ),

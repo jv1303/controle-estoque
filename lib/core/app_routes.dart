@@ -8,10 +8,10 @@ import '../screens/register_screen.dart';
 import '../services/auth_service.dart';
 
 abstract final class AppRoutes {
-  static const login = '/login';
-  static const register = '/register';
-  static const home = '/home';
-  static const productForm = '/product-form';
+  static const login = '/entrar';
+  static const register = '/nova-conta';
+  static const home = '/estoque';
+  static const productForm = '/produto';
 
   static const _privateRoutes = {home, productForm};
 

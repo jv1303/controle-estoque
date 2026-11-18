@@ -14,7 +14,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _form = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passwordCtrl = TextEditingController();
   bool _busy = false;
@@ -27,7 +27,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _signIn() async {
-    if (_busy || !_formKey.currentState!.validate()) return;
+    if (_busy || !_form.currentState!.validate()) return;
     setState(() => _busy = true);
     try {
       await AuthService.instance.login(
@@ -45,70 +45,101 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final colors = Theme.of(context).colorScheme;
+    final text = Theme.of(context).textTheme;
 
     return Scaffold(
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+      body: ListView(
+        padding: EdgeInsets.zero,
+        children: [
+          Container(
+            padding: const EdgeInsets.fromLTRB(24, 64, 24, 48),
+            decoration: BoxDecoration(
+              color: colors.primary,
+              borderRadius: const BorderRadius.vertical(
+                bottom: Radius.circular(32),
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.warehouse_outlined,
+                  size: 48,
+                  color: colors.onPrimary,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Meu Estoque',
+                        style: text.headlineSmall?.copyWith(
+                          color: colors.onPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        'Seus produtos, quantidades e valores',
+                        style: TextStyle(color: colors.onPrimary),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Icon(
-                      Icons.inventory_2,
-                      size: 72,
-                      color: theme.colorScheme.primary,
+              constraints: const BoxConstraints(maxWidth: 380),
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Card.outlined(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 20, 16, 12),
+                    child: Form(
+                      key: _form,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text('Acesse sua conta', style: text.titleMedium),
+                          const SizedBox(height: 16),
+                          AppTextField(
+                            controller: _emailCtrl,
+                            label: 'Seu e-mail',
+                            icon: Icons.alternate_email,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: Validators.email,
+                          ),
+                          PasswordField(
+                            controller: _passwordCtrl,
+                            validator: Validators.password,
+                            onSubmitted: _signIn,
+                          ),
+                          FilledButton.icon(
+                            onPressed: _busy ? null : _signIn,
+                            icon: const Icon(Icons.arrow_forward),
+                            label: Text(_busy ? 'Aguarde...' : 'Acessar'),
+                          ),
+                          const Divider(height: 32),
+                          OutlinedButton(
+                            onPressed: () => Navigator.pushNamed(
+                              context,
+                              AppRoutes.register,
+                            ),
+                            child: const Text(
+                              'Primeira vez aqui? Faça seu cadastro',
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Meu Estoque',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineMedium,
-                    ),
-                    const Text(
-                      'Entre para controlar seus produtos',
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 32),
-                    AppTextField(
-                      controller: _emailCtrl,
-                      label: 'E-mail',
-                      icon: Icons.alternate_email,
-                      keyboardType: TextInputType.emailAddress,
-                      validator: Validators.email,
-                    ),
-                    PasswordField(
-                      controller: _passwordCtrl,
-                      validator: Validators.password,
-                      onSubmitted: _signIn,
-                    ),
-                    const SizedBox(height: 8),
-                    FilledButton(
-                      onPressed: _busy ? null : _signIn,
-                      child: _busy
-                          ? const SizedBox.square(
-                              dimension: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Entrar'),
-                    ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () =>
-                          Navigator.pushNamed(context, AppRoutes.register),
-                      child: const Text('Ainda não tem conta? Criar conta'),
-                    ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }

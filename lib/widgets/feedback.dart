@@ -27,7 +27,7 @@ Future<bool> confirmAction(
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(dialogContext, false),
-          child: const Text('Cancelar'),
+          child: const Text('Voltar'),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(dialogContext, true),

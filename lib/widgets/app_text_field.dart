@@ -40,7 +40,7 @@ class PasswordField extends StatefulWidget {
   const PasswordField({
     super.key,
     required this.controller,
-    this.label = 'Senha',
+    this.label = 'Sua senha',
     this.validator,
     this.onSubmitted,
   });
@@ -68,7 +68,7 @@ class _PasswordFieldState extends State<PasswordField> {
         onFieldSubmitted: (_) => widget.onSubmitted?.call(),
         decoration: InputDecoration(
           labelText: widget.label,
-          prefixIcon: const Icon(Icons.lock_outline),
+          prefixIcon: const Icon(Icons.key_outlined),
           suffixIcon: IconButton(
             tooltip: _hidden ? 'Mostrar senha' : 'Esconder senha',
             icon: Icon(_hidden ? Icons.visibility : Icons.visibility_off),

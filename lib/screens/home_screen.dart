@@ -62,16 +62,16 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _remove(Product product) async {
     setState(() => _items.remove(product));
     await _products.remove(product.id!);
-    if (mounted) showMessage(context, '"${product.name}" foi excluído');
+    if (mounted) showMessage(context, '"${product.name}" removido do estoque');
     await _refresh();
   }
 
   Future<void> _signOut() async {
     final ok = await confirmAction(
       context,
-      title: 'Sair',
-      message: 'Deseja sair da sua conta?',
-      confirmLabel: 'Sair',
+      title: 'Encerrar sessão',
+      message: 'Na próxima vez será preciso informar e-mail e senha.',
+      confirmLabel: 'Encerrar',
     );
     if (!ok) return;
     await AuthService.instance.logout();
@@ -83,19 +83,26 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Olá, ${_user.firstName}'),
+        title: const Text('Meu Estoque'),
         actions: [
+          Tooltip(
+            message: _user.name,
+            child: CircleAvatar(
+              radius: 16,
+              child: Text(_user.firstName.substring(0, 1).toUpperCase()),
+            ),
+          ),
           IconButton(
-            tooltip: 'Sair',
-            icon: const Icon(Icons.logout),
+            tooltip: 'Encerrar sessão',
+            icon: const Icon(Icons.exit_to_app),
             onPressed: _signOut,
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
+        tooltip: 'Novo produto',
         onPressed: () => _openForm(),
-        icon: const Icon(Icons.add),
-        label: const Text('Produto'),
+        child: const Icon(Icons.add_box_outlined),
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -118,8 +125,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (_items.isEmpty)
                     EmptyState(
                       message: _searchCtrl.text.isEmpty
-                          ? 'Nenhum produto cadastrado.\n'
-                                'Toque em "Produto" para começar.'
+                          ? 'Seu estoque está vazio.\n'
+                                'Use o botão no canto para adicionar.'
                           : 'Nada encontrado para "${_searchCtrl.text}".',
                     )
                   else
@@ -135,13 +142,16 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: Theme.of(context).colorScheme.error,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Icon(Icons.delete, color: Colors.white),
+                          child: const Icon(
+                            Icons.delete_sweep,
+                            color: Colors.white,
+                          ),
                         ),
                         confirmDismiss: (_) => confirmAction(
                           context,
-                          title: 'Excluir produto',
-                          message: 'Excluir "${product.name}" do estoque?',
-                          confirmLabel: 'Excluir',
+                          title: 'Remover produto',
+                          message: 'Tirar "${product.name}" do estoque?',
+                          confirmLabel: 'Remover',
                         ),
                         onDismissed: (_) => _remove(product),
                         child: ProductCard(

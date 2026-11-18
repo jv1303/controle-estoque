@@ -11,22 +11,22 @@ Projeto da disciplina de desenvolvimento mobile (DSM). É um app Android em Flut
 
 | Tela | O que tem |
 |---|---|
-| Login | e-mail e senha (com botão para mostrar a senha) e link para criar conta |
-| Criar conta | nome, e-mail, senha e confirmação da senha |
-| Início | três quadros de resumo (produtos, unidades e valor total), busca por nome e a lista de produtos |
-| Produto | formulário de cadastro e edição: nome, categoria, quantidade e preço. Na edição aparece a lixeira |
+| Entrar (`/entrar`) | faixa com o nome do app e um card com e-mail, senha (com botão para mostrar) e acesso ao cadastro |
+| Nova conta (`/nova-conta`) | nome, e-mail, senha e a senha repetida |
+| Estoque (`/estoque`) | inicial do usuário no topo, três quadros de resumo (produtos, unidades e valor total), busca por nome e a lista de produtos |
+| Produto (`/produto`) | formulário de cadastro e edição: nome, categoria, quantidade e preço. Na edição aparece a lixeira |
 
-Na lista dá para somar ou tirar unidades com os botões **+** e **-**, tocar no produto para editar e arrastar para a esquerda para excluir. Toda exclusão e o logout pedem confirmação.
+Na lista dá para somar ou tirar unidades com os botões **+** e **-**, tocar no produto para editar e arrastar para a esquerda para remover. Remover um produto e encerrar a sessão sempre pedem confirmação.
 
 ## Regras do sistema
 
-1. Só entra quem tem conta. As telas de Início e Produto não abrem sem login.
+1. Só entra quem tem conta. As telas de Estoque e Produto não abrem sem login.
 2. Não existem duas contas com o mesmo e-mail.
 3. A senha precisa ter pelo menos 6 caracteres e é guardada só como hash.
 4. Quantidade é um número inteiro e nunca fica negativa. Preço também não pode ser negativo.
 5. Produto com 5 unidades ou menos aparece marcado como **Estoque baixo**.
 6. Um usuário nunca vê nem altera produtos de outro.
-7. Depois de entrar, o app lembra do usuário até ele tocar em sair.
+7. Depois de entrar, o app lembra do usuário até ele encerrar a sessão.
 
 ## Persistência
 
@@ -60,7 +60,7 @@ As operações do CRUD estão no `ProductService`, e todas filtram por `owner_id
 - **E-mail repetido:** a coluna `email` é `UNIQUE`. O SQLite recusa o insert, e o `AuthService` transforma esse erro na mensagem "Já existe uma conta com esse e-mail."
 - **Entrar:** busca a conta pelo e-mail, recalcula o hash com o salt salvo e compara. Os erros possíveis são "Nenhuma conta com esse e-mail." e "Senha incorreta."
 - **Sessão:** o id do usuário fica no `shared_preferences`. No `main()`, `restoreSession()` lê esse id antes de abrir o app.
-- **Sair:** apaga o id salvo e volta para o login.
+- **Encerrar sessão:** apaga o id salvo e volta para a tela de entrada.
 - **Telas protegidas:** o `MaterialApp` usa `onGenerateRoute`. Em `AppRoutes.generate`, se a rota pedida é privada e ninguém está logado, a tela entregue é a de login.
 
 ## Arquitetura

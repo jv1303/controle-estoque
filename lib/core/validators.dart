@@ -9,7 +9,9 @@ abstract final class Validators {
   static String? email(String? value) {
     final error = notEmpty(value, field: 'E-mail');
     if (error != null) return error;
-    if (!_emailPattern.hasMatch(value!.trim())) return 'E-mail inválido';
+    if (!_emailPattern.hasMatch(value!.trim())) {
+      return 'Digite um e-mail válido';
+    }
     return null;
   }
 

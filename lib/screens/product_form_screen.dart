@@ -18,7 +18,7 @@ class ProductFormScreen extends StatefulWidget {
 }
 
 class _ProductFormScreenState extends State<ProductFormScreen> {
-  final _formKey = GlobalKey<FormState>();
+  final _form = GlobalKey<FormState>();
   late final _service = ProductService(AuthService.instance.currentUser!.id);
 
   late final _nameCtrl = TextEditingController(text: widget.product?.name);
@@ -42,7 +42,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   }
 
   Future<void> _save() async {
-    if (_saving || !_formKey.currentState!.validate()) return;
+    if (_saving || !_form.currentState!.validate()) return;
     setState(() => _saving = true);
 
     final product = Product(
@@ -71,9 +71,9 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
   Future<void> _delete() async {
     final ok = await confirmAction(
       context,
-      title: 'Excluir produto',
-      message: 'Excluir "${widget.product!.name}" do estoque?',
-      confirmLabel: 'Excluir',
+      title: 'Remover produto',
+      message: 'Tirar "${widget.product!.name}" do estoque?',
+      confirmLabel: 'Remover',
     );
     if (!ok) return;
     await _service.remove(widget.product!.id!);
@@ -88,14 +88,14 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
         actions: [
           if (_editing)
             IconButton(
-              tooltip: 'Excluir',
-              icon: const Icon(Icons.delete_outline),
+              tooltip: 'Remover do estoque',
+              icon: const Icon(Icons.delete_sweep_outlined),
               onPressed: _delete,
             ),
         ],
       ),
       body: Form(
-        key: _formKey,
+        key: _form,
         child: ListView(
           padding: const EdgeInsets.all(20),
           children: [
@@ -103,7 +103,7 @@ class _ProductFormScreenState extends State<ProductFormScreen> {
               controller: _nameCtrl,
               label: 'Nome do produto',
               icon: Icons.label_outline,
-              validator: (v) => Validators.notEmpty(v, field: 'Nome'),
+              validator: (v) => Validators.notEmpty(v, field: 'O nome'),
             ),
             DropdownButtonFormField<String>(
               initialValue: _category,
