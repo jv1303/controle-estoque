@@ -1,121 +1,94 @@
-# Meu Estoque
+# Controle de Estoque
 
-Aplicativo mobile em Flutter para controlar o estoque de produtos de um pequeno comércio ou de casa. Cada pessoa tem sua conta e cadastra os próprios produtos, com categoria, quantidade e preço. A tela inicial mostra quantos produtos existem, o total de unidades e o valor total em estoque.
+Projeto da disciplina de desenvolvimento mobile (DSM). É um app Android em Flutter para quem precisa saber o que tem guardado, quanto tem e quanto vale: uma pequena loja, uma cantina, a despensa de casa. Cada conta tem o seu próprio estoque.
 
-## O que dá pra fazer
+> Desenvolvido por **João Victor Serafim** (DSM, 5º semestre).
 
-- Criar conta, entrar e sair
-- Continuar logado ao fechar e abrir o app (sessão salva no aparelho)
-- Cadastrar, listar, editar e excluir produtos
-- Somar ou tirar unidades direto na lista (botões + e -)
-- Buscar produto pelo nome
-- Ver aviso de "Estoque baixo" quando sobram 5 unidades ou menos
-- Excluir arrastando o item para a esquerda (com confirmação) ou pela tela de edição
-- Validação dos formulários: campos obrigatórios, e-mail válido, senha com 6+ caracteres, confirmação de senha, quantidade inteira e preço válido
-- Mensagens de erro: e-mail já cadastrado, conta não encontrada, senha incorreta
+## Telas
 
-## Stack
-
-| Item | Uso |
+| Tela | O que tem |
 |---|---|
-| Flutter / Dart | interface e lógica |
-| material_ui | componentes visuais (Material 3) |
-| sqflite | banco SQLite local |
-| shared_preferences | guarda o id do usuário logado |
-| crypto | hash SHA-256 da senha |
-| intl | formatação de dinheiro (R$) |
-| sqflite_common_ffi | usado só nos testes, para rodar o SQLite no computador |
+| Login | e-mail e senha (com botão para mostrar a senha) e link para criar conta |
+| Criar conta | nome, e-mail, senha e confirmação da senha |
+| Início | três quadros de resumo (produtos, unidades e valor total), busca por nome e a lista de produtos |
+| Produto | formulário de cadastro e edição: nome, categoria, quantidade e preço. Na edição aparece a lixeira |
 
-## Rodando localmente
+Na lista dá para somar ou tirar unidades com os botões **+** e **-**, tocar no produto para editar e arrastar para a esquerda para excluir. Toda exclusão e o logout pedem confirmação.
 
-Requisitos: Flutter instalado e um emulador Android aberto (ou celular com depuração USB).
+## Regras do sistema
 
-```bash
-git clone https://github.com/jv1303/controle-estoque.git
-cd controle-estoque
-flutter pub get
-flutter run
+1. Só entra quem tem conta. As telas de Início e Produto não abrem sem login.
+2. Não existem duas contas com o mesmo e-mail.
+3. A senha precisa ter pelo menos 6 caracteres e é guardada só como hash.
+4. Quantidade é um número inteiro e nunca fica negativa. Preço também não pode ser negativo.
+5. Produto com 5 unidades ou menos aparece marcado como **Estoque baixo**.
+6. Um usuário nunca vê nem altera produtos de outro.
+7. Depois de entrar, o app lembra do usuário até ele tocar em sair.
+
+## Persistência
+
+Os dados ficam num banco **SQLite** local (`meu_estoque.db`), aberto pelo pacote `sqflite`. São duas tabelas com relação de um para muitos: um usuário tem vários produtos.
+
+```
+users (1) ──────< (N) products
+  id                  id
+  name                owner_id  -> users.id
+  email (único)       name
+  password_hash       category
+  salt                quantity  (>= 0)
+  created_at          price     (>= 0)
+                      updated_at
 ```
 
-Testes automáticos:
+As tabelas são criadas no `onCreate` do `DatabaseService`. As chaves estrangeiras são ligadas com `PRAGMA foreign_keys = ON`, então ao apagar um usuário os produtos dele vão junto (`ON DELETE CASCADE`).
 
-```bash
-flutter test
-```
+As operações do CRUD estão no `ProductService`, e todas filtram por `owner_id`:
 
-## Como funciona o login
-
-Toda a parte de autenticação está em `lib/services/auth_service.dart`.
-
-1. No cadastro é gerado um *salt* aleatório para o usuário. A senha é salva como `sha256(salt + senha)`, nunca em texto puro.
-2. O e-mail tem restrição `UNIQUE` no banco. Se já existir, o SQLite recusa e o app mostra "Já existe uma conta com esse e-mail."
-3. No login o app busca o usuário pelo e-mail, refaz o hash com o salt dele e compara.
-4. Quando dá certo, o id do usuário é salvo com `shared_preferences`. Ao abrir o app de novo, `restoreSession()` lê esse id e entra direto.
-5. As rotas `/home` e `/product-form` são privadas: em `lib/core/app_routes.dart`, se ninguém estiver logado, o `onGenerateRoute` manda para o login.
-6. Os erros de autenticação são lançados como `AuthException` e a tela mostra a mensagem num SnackBar.
-
-## Banco de dados
-
-SQLite, arquivo `meu_estoque.db`, criado em `lib/services/database_service.dart`.
-
-**users**
-
-| coluna | tipo |
+| Operação | Método |
 |---|---|
-| id | INTEGER, chave primária |
-| name | TEXT |
-| email | TEXT, único |
-| password_hash | TEXT |
-| salt | TEXT |
-| created_at | TEXT (data ISO) |
+| Inserir | `create` |
+| Consultar / buscar | `findAll(search:)` |
+| Alterar | `update` e `adjustQuantity` |
+| Remover | `remove` |
 
-**products**
+## Login e segurança
 
-| coluna | tipo |
+- **Cadastro:** o app sorteia um *salt* para o usuário e salva `sha256(salt:senha)`. Mesmo duas pessoas com a mesma senha ficam com hashes diferentes.
+- **E-mail repetido:** a coluna `email` é `UNIQUE`. O SQLite recusa o insert, e o `AuthService` transforma esse erro na mensagem "Já existe uma conta com esse e-mail."
+- **Entrar:** busca a conta pelo e-mail, recalcula o hash com o salt salvo e compara. Os erros possíveis são "Nenhuma conta com esse e-mail." e "Senha incorreta."
+- **Sessão:** o id do usuário fica no `shared_preferences`. No `main()`, `restoreSession()` lê esse id antes de abrir o app.
+- **Sair:** apaga o id salvo e volta para o login.
+- **Telas protegidas:** o `MaterialApp` usa `onGenerateRoute`. Em `AppRoutes.generate`, se a rota pedida é privada e ninguém está logado, a tela entregue é a de login.
+
+## Arquitetura
+
+| Pasta | Responsabilidade |
 |---|---|
-| id | INTEGER, chave primária |
-| owner_id | INTEGER, chave estrangeira para users.id |
-| name | TEXT |
-| category | TEXT |
-| quantity | INTEGER (não pode ser negativo) |
-| price | REAL (não pode ser negativo) |
-| updated_at | TEXT (data ISO) |
+| `lib/core` | rotas (`app_routes.dart`), validações dos formulários (`validators.dart`) e formatação de dinheiro (`formatters.dart`) |
+| `lib/models` | `Product` e `AppUser`, com conversão de/para linha do banco |
+| `lib/services` | `DatabaseService` (conexão), `AuthService` (conta e sessão) e `ProductService` (CRUD) |
+| `lib/screens` | `login_screen`, `register_screen`, `home_screen` e `product_form_screen` |
+| `lib/widgets` | peças reutilizadas pelas telas: campos de texto, card do produto, resumo, lista vazia, SnackBar e diálogo |
 
-O CRUD fica em `lib/services/product_service.dart`. Todas as consultas usam `owner_id = ?`, então um usuário nunca vê nem altera produtos de outro.
+As telas não escrevem SQL: elas chamam os services, e os services falam com o banco.
 
-## Organização das pastas
+## Pacotes usados
 
-```
-lib/
-  main.dart                  inicia o app e restaura a sessão
-  core/
-    app_routes.dart          nomes das rotas e proteção das telas
-    validators.dart          validações dos formulários
-    formatters.dart          formatação de R$
-  models/
-    app_user.dart
-    product.dart
-  services/
-    database_service.dart    abre o banco e cria as tabelas
-    auth_service.dart        cadastro, login, logout e sessão
-    product_service.dart     CRUD de produtos
-  screens/
-    login_screen.dart
-    register_screen.dart
-    home_screen.dart
-    product_form_screen.dart cadastro e edição
-  widgets/
-    app_text_field.dart      campo de texto e campo de senha
-    product_card.dart        item da lista
-    stock_summary.dart       resumo no topo da Home
-    empty_state.dart         mensagem de lista vazia
-    feedback.dart            SnackBar e diálogo de confirmação
-test/
-  validators_test.dart
-  product_test.dart
-  services_test.dart         testa login e CRUD com SQLite de verdade
-```
+`sqflite`, `path`, `crypto`, `shared_preferences`, `intl` e `material_ui`. Nos testes também é usado o `sqflite_common_ffi`.
 
-## Autor
+## Testes
 
-João Victor Serafim, 5º semestre de DSM
+São 18 testes automáticos em `test/`:
+
+- `validators_test.dart`: regras de e-mail, senha, quantidade e preço
+- `product_test.dart`: valor total, estoque baixo e conversão para o banco
+- `services_test.dart`: usa o SQLite de verdade no computador para testar cadastro, e-mail repetido, senha errada, sessão, CRUD completo e o isolamento entre usuários
+
+## Como executar
+
+Com o Flutter instalado e um emulador Android aberto:
+
+1. Clone o repositório: `git clone https://github.com/jv1303/controle-estoque.git`
+2. Entre na pasta e baixe as dependências: `flutter pub get`
+3. Rode o app: `flutter run`
+4. Para rodar os testes: `flutter test`
